@@ -25,6 +25,20 @@
             position: relative;
             z-index: 10;
         }
+        .header-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        .header-buttons .btn {
+            margin-left: 10px;
+            color: white;
+            background-color: #ff8c00;
+            border: none;
+        }
+        .header-buttons .btn:hover {
+            background-color: #ff0080;
+        }
         h1 {
             text-align: center;
             color: #00ff99;
@@ -40,6 +54,23 @@
         }
         .form-group {
             margin-bottom: 20px;
+            position: relative;
+        }
+        .speech-btn, .stop-btn {
+            position: absolute;
+            top: 0;
+            border: none;
+            background: transparent;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 1.5em;
+            outline: none;
+        }
+        .speech-btn {
+            right: 45px;
+        }
+        .stop-btn {
+            right: 0;
         }
         .btn-primary {
             width: 100%;
@@ -49,7 +80,7 @@
             font-weight: bold;
             padding: 15px;
             font-size: 1.2em;
-            border-radius: 25px; /* Rounded button */
+            border-radius: 25px;
         }
         .btn-primary:hover {
             background: linear-gradient(45deg, #ff8c00, #ff0080);
@@ -84,24 +115,44 @@
         .shape {
             position: absolute;
             border-radius: 50%;
-            opacity: 0.5;
+            opacity: 0.8;
             animation: move 20s linear infinite;
-            filter: blur(5px); /* Added blur for better visuals */
+            filter: blur(3px);
+            pointer-events: none; /* Prevent clicks from being blocked by the shapes */
         }
         @keyframes move {
             0% {
                 transform: translateY(0);
             }
             50% {
-                transform: translateY(-100px);
+                transform: translateY(-80px);
             }
             100% {
                 transform: translateY(0);
             }
         }
+        .recording-indicator {
+            display: none;
+            color: #ff0000;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+
+<!-- Add the audio element for background sound -->
+
+
+
+<!-- Button to toggle audio -->
+
+
+<div class="header-buttons">
+    <a href="/profile" class="btn btn-outline-light">Profile</a>
+    <a href="/logout" class="btn btn-outline-light" onclick="handleLogout()">Logout</a>
+</div>
 
 <div class="container mt-5">
     <h1>Certificate Recommendation System</h1>
@@ -110,6 +161,13 @@
         <div class="form-group">
             <label for="topic">Enter a Topic:</label>
             <input type="text" class="form-control" id="topic" name="topic" required placeholder="e.g., Machine Learning">
+            <button type="button" class="speech-btn" onclick="startSpeechRecognition()">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button type="button" class="stop-btn" onclick="stopSpeechRecognition()">
+                <i class="fas fa-stop"></i>
+            </button>
+            <p class="recording-indicator" id="recording-indicator">Recording...</p>
         </div>
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-search"></i> Get Recommendations
@@ -129,9 +187,7 @@
     <p>&copy; 2024 Certificate Recommendation System | Designed by Your Name</p>
 </footer>
 
-<!-- Animated shapes will be generated here -->
 <script>
-    // Function to generate random colors
     function getRandomColor() {
         const letters = '0123456789ABCDEF';
         let color = '#';
@@ -141,17 +197,16 @@
         return color;
     }
 
-    // Function to create animated circles
     function createCircles(numCircles) {
         const body = document.body;
         for (let i = 0; i < numCircles; i++) {
             const circle = document.createElement('div');
             circle.classList.add('shape');
             circle.style.backgroundColor = getRandomColor();
-            const size = Math.random() * 15 + 5; // Random size between 5 and 20
+            const size = Math.random() * 30 + 10;
             circle.style.width = size + 'vw';
             circle.style.height = size + 'vw';
-            circle.style.top = Math.random() * 100 + 'vh'; // Random position on the viewport
+            circle.style.top = Math.random() * 100 + 'vh';
             circle.style.left = Math.random() * 100 + 'vw';
             body.appendChild(circle);
         }
@@ -159,10 +214,55 @@
 
     // Create 12 animated circles
     createCircles(12);
-</script>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    let recognition;
+
+    function startSpeechRecognition() {
+        const recordingIndicator = document.getElementById('recording-indicator');
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.onstart = function() {
+                recordingIndicator.style.display = 'block';
+            };
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('topic').value = transcript;
+                recordingIndicator.style.display = 'none';
+            };
+            recognition.onerror = function() {
+                recordingIndicator.style.display = 'none';
+            };
+            recognition.start();
+        } else {
+            alert('Speech recognition not supported in this browser.');
+        }
+    }
+
+    function stopSpeechRecognition() {
+        if (recognition) {
+            recognition.stop();
+        }
+    }
+
+    function toggleAudio() {
+        const audio = document.getElementById('background-audio');
+        const toggleButton = document.getElementById('toggle-audio');
+        if (audio.muted) {
+            audio.muted = false;
+            toggleButton.textContent = 'Audio Off';
+        } else {
+            audio.muted = true;
+            toggleButton.textContent = 'Audio On';
+        }
+    }
+
+    function handleLogout() {
+        // Implement logout functionality
+        console.log('Logging out...');
+        // You can redirect to the logout route if needed
+        // window.location.href = '/logout';
+    }
+</script>
 </body>
 </html>
